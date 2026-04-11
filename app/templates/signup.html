@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Time-Locked Secret</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: 16px; }
+    .card { background: white; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,.08); padding: 36px 40px; width: 100%; max-width: 420px; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    p.sub { margin: 0 0 24px; color: #6b7280; font-size: 14px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; margin-top: 14px; }
+    input[type=text], input[type=email], input[type=password] { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+    input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+    .error { background: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; }
+    .hint { font-size: 12px; color: #9ca3af; margin-top: 3px; }
+    .btn-primary { display: block; width: 100%; margin-top: 20px; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .divider { display: flex; align-items: center; gap: 10px; margin: 20px 0; color: #9ca3af; font-size: 12px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
+    .btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; color: #374151; text-decoration: none; }
+    .btn-google:hover { background: #f9fafb; }
+    .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .footer-link { text-align: center; margin-top: 20px; font-size: 13px; color: #6b7280; }
+    .footer-link a { color: #2563eb; text-decoration: none; }
+    .footer-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Create an account</h1>
+  <p class="sub">Start sharing time-locked secrets</p>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" action="/signup">
+    <label for="name">Name <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
+    <input type="text" id="name" name="name" autocomplete="name" value="{{ request.form.get('name', '') }}">
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" autocomplete="email" value="{{ request.form.get('email', '') }}" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autocomplete="new-password" required>
+    <p class="hint">Minimum 8 characters</p>
+
+    <label for="confirm">Confirm password</label>
+    <input type="password" id="confirm" name="confirm" autocomplete="new-password" required>
+
+    <button type="submit" class="btn-primary">Create account</button>
+  </form>
+
+  <div class="divider">or</div>
+
+  <a href="/auth/google/login" class="btn-google">
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    Continue with Google
+  </a>
+
+  <p class="footer-link">Already have an account? <a href="/login">Log in</a></p>
+</div>
+</body>
+</html>

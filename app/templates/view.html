@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Secret</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 16px; }
+    .box { padding: 20px 24px; border-radius: 6px; margin-top: 24px; }
+    .available { background: #f0fdf4; border: 1px solid #86efac; }
+    .not-yet   { background: #fffbeb; border: 1px solid #fcd34d; }
+    .expired   { background: #fef2f2; border: 1px solid #fca5a5; }
+    .content   { white-space: pre-wrap; font-family: monospace; font-size: 15px; margin-top: 8px; }
+    .window    { margin-top: 12px; font-size: 13px; color: #6b7280; }
+    .window span { font-weight: bold; color: #374151; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 28px; font-size: 13px; color: #6b7280; }
+    nav a { color: #2563eb; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <nav>
+    {% if current_user.is_authenticated %}
+    <span>Logged in as <strong>{{ current_user.name }}</strong></span>
+    <a href="/logout">Log out</a>
+    {% else %}
+    <span>Time-Locked Secret</span>
+    <a href="/login">Log in</a>
+    {% endif %}
+  </nav>
+  <h1>Time-Locked Secret</h1>
+
+  {% if result.status == 'available' %}
+  <div class="box available">
+    <strong>Secret is available:</strong>
+    <div class="content">{{ result.content }}</div>
+    <p class="window">
+      Access window:
+      <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+      &rarr;
+      <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+    </p>
+  </div>
+
+  {% elif result.status == 'not_yet' %}
+  <div class="box not-yet">
+    <strong>This secret is not yet available.</strong>
+    <p>It will become accessible on
+      <strong>
+        <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+      </strong>.
+    </p>
+    <p class="window">
+      Access window:
+      <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+      &rarr;
+      <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+    </p>
+  </div>
+
+  {% elif result.status == 'expired' %}
+  <div class="box expired">
+    <strong>This secret has expired.</strong>
+    <p class="window">
+      Access window was:
+      <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+      &rarr;
+      <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+    </p>
+  </div>
+  {% endif %}
+
+  <script>
+    var fmt = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' };
+    document.querySelectorAll('.local-time').forEach(function(el) {
+      var date = new Date(el.getAttribute('data-utc'));
+      el.textContent = date.toLocaleString(undefined, fmt);
+    });
+  </script>
+</body>
+</html>

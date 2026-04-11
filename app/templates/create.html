@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create a Time-Locked Secret</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 16px; }
+    h1 { margin-bottom: 4px; }
+    label { display: block; margin-top: 16px; font-weight: bold; }
+    textarea, input, select { width: 100%; box-sizing: border-box; padding: 8px; font-size: 14px; margin-top: 4px; }
+    textarea { height: 140px; resize: vertical; }
+    .error { background: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
+    button { margin-top: 20px; padding: 10px 24px; font-size: 15px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 4px; }
+    button:hover { background: #1d4ed8; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 28px; font-size: 13px; color: #6b7280; }
+    nav a { color: #2563eb; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span>Logged in as <strong>{{ current_user.name }}</strong></span>
+    <span>
+      <a href="/my-secrets">My secrets</a>
+      <a href="/logout" style="margin-left:12px">Log out</a>
+    </span>
+  </nav>
+  <h1>Create a Time-Locked Secret</h1>
+  <p>Your secret will only be readable within the time window you choose.</p>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" action="/">
+    <label for="content">Secret</label>
+    <textarea id="content" name="content" maxlength="10000" placeholder="Enter your secret here…" required>{{ request.form.get('content', '') }}</textarea>
+
+    <label for="start_dt">Available from</label>
+    <input type="datetime-local" id="start_dt" name="start_dt" value="{{ request.form.get('start_dt', '') }}" required>
+
+    <label for="end_dt">Available until</label>
+    <input type="datetime-local" id="end_dt" name="end_dt" value="{{ request.form.get('end_dt', '') }}" required>
+
+    <label for="timezone">Time zone</label>
+    <select id="timezone" name="timezone" required>
+      <option value="">— select a time zone —</option>
+      {% for region, zones in timezones.items() %}
+      <optgroup label="{{ region }}">
+        {% for tz in zones %}
+        <option value="{{ tz }}" {% if request.form.get('timezone') == tz %}selected{% endif %}>{{ tz }}</option>
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+
+    <button type="submit">Create Secret</button>
+  </form>
+
+  <script>
+    // Auto-select the browser's local timezone in the dropdown
+    var localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    var sel = document.getElementById('timezone');
+    // Only auto-select if the user hasn't already chosen one (i.e. page is fresh)
+    if (sel && !sel.value) {
+      var opt = sel.querySelector('option[value="' + localTz + '"]');
+      if (opt) { opt.selected = true; }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+
+# Database
+*.db
+
+# Environment / secrets — NEVER commit this
+.env
+
+# VS Code
+.vscode/
+
+# pytest
+.pytest_cache/
