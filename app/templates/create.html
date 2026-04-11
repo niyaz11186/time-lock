@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create a Time-Locked Secret</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 16px; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; padding: 36px 16px 60px; }
     h1 { margin-bottom: 4px; }
     label { display: block; margin-top: 16px; font-weight: bold; }
     textarea, input, select { width: 100%; box-sizing: border-box; padding: 8px; font-size: 14px; margin-top: 4px; }
@@ -13,19 +15,26 @@
     .error { background: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
     button { margin-top: 20px; padding: 10px 24px; font-size: 15px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 4px; }
     button:hover { background: #1d4ed8; }
-    nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 28px; font-size: 13px; color: #6b7280; }
-    nav a { color: #2563eb; text-decoration: none; }
-    nav a:hover { text-decoration: underline; }
+    nav.topbar { position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; height: 54px; background: #1e293b; box-shadow: 0 1px 6px rgba(0,0,0,.3); }
+    .brand { font-size: 15px; font-weight: 700; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+    .nav-links a { color: #cbd5e1; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-weight: 500; }
+    .nav-links a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .user-badge { color: #94a3b8; font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,.07); border-radius: 5px; margin-right: 4px; }
+    .btn-logout { color: #f87171 !important; }
+    .btn-logout:hover { background: rgba(248,113,113,.12) !important; }
   </style>
 </head>
 <body>
-  <nav>
-    <span>Logged in as <strong>{{ current_user.name }}</strong></span>
-    <span>
-      <a href="/my-secrets">My secrets</a>
-      <a href="/logout" style="margin-left:12px">Log out</a>
-    </span>
+  <nav class="topbar">
+    <a href="/" class="brand">🔒 Time-Lock</a>
+    <div class="nav-links">
+      <span class="user-badge">{{ current_user.name }}</span>
+      <a href="/my-secrets">My Secrets</a>
+      <a href="/logout" class="btn-logout">Log out</a>
+    </div>
   </nav>
+  <div class="container">
   <h1>Create a Time-Locked Secret</h1>
   <p>Your secret will only be readable within the time window you choose.</p>
 
@@ -68,5 +77,6 @@
       if (opt) { opt.selected = true; }
     }
   </script>
+  </div>
 </body>
 </html>

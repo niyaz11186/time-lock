@@ -10,9 +10,8 @@ _MAX_CONTENT_LENGTH = 10_000
 
 
 class SecretStore:
-    def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path
-        init_db(db_path)
+    def __init__(self) -> None:
+        init_db()
 
     # ------------------------------------------------------------------
     # Task 2.3
@@ -50,10 +49,10 @@ class SecretStore:
 
         # Persist
         now = datetime.utcnow().isoformat()
-        with get_connection(self._db_path) as conn:
+        with get_connection() as conn:
             conn.execute(
                 "INSERT INTO secrets (id, user_id, content, start_utc, end_utc, created_at) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
+                "VALUES (%s, %s, %s, %s, %s, %s)",
                 (
                     token,
                     user_id,
@@ -73,10 +72,10 @@ class SecretStore:
 
     def get_secret(self, secret_id: str) -> Secret | None:
         """Return the Secret record for *secret_id*, or None if not found."""
-        with get_connection(self._db_path) as conn:
+        with get_connection() as conn:
             row = conn.execute(
                 "SELECT id, content, start_utc, end_utc, created_at "
-                "FROM secrets WHERE id = ?",
+                "FROM secrets WHERE id = %s",
                 (secret_id,),
             ).fetchone()
 
@@ -93,10 +92,10 @@ class SecretStore:
 
     def list_secrets(self, user_id: int) -> list[Secret]:
         """Return all secrets belonging to user_id, newest first."""
-        with get_connection(self._db_path) as conn:
+        with get_connection() as conn:
             rows = conn.execute(
                 "SELECT id, content, start_utc, end_utc, created_at "
-                "FROM secrets WHERE user_id = ? ORDER BY created_at DESC",
+                "FROM secrets WHERE user_id = %s ORDER BY created_at DESC",
                 (user_id,),
             ).fetchall()
         return [
@@ -112,9 +111,9 @@ class SecretStore:
 
     def delete_secret(self, secret_id: str, user_id: int) -> bool:
         """Delete a secret only if it belongs to user_id. Returns True if deleted."""
-        with get_connection(self._db_path) as conn:
+        with get_connection() as conn:
             cur = conn.execute(
-                "DELETE FROM secrets WHERE id = ? AND user_id = ?",
+                "DELETE FROM secrets WHERE id = %s AND user_id = %s",
                 (secret_id, user_id),
             )
             conn.commit()

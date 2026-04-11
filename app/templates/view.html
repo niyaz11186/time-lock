@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>View Secret</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 16px; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; padding: 36px 16px 60px; }
     .box { padding: 20px 24px; border-radius: 6px; margin-top: 24px; }
     .available { background: #f0fdf4; border: 1px solid #86efac; }
     .not-yet   { background: #fffbeb; border: 1px solid #fcd34d; }
@@ -13,21 +15,32 @@
     .content   { white-space: pre-wrap; font-family: monospace; font-size: 15px; margin-top: 8px; }
     .window    { margin-top: 12px; font-size: 13px; color: #6b7280; }
     .window span { font-weight: bold; color: #374151; }
-    nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 28px; font-size: 13px; color: #6b7280; }
-    nav a { color: #2563eb; text-decoration: none; }
-    nav a:hover { text-decoration: underline; }
+    nav.topbar { position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; height: 54px; background: #1e293b; box-shadow: 0 1px 6px rgba(0,0,0,.3); }
+    .brand { font-size: 15px; font-weight: 700; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+    .nav-links a { color: #cbd5e1; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-weight: 500; }
+    .nav-links a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .user-badge { color: #94a3b8; font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,.07); border-radius: 5px; margin-right: 4px; }
+    .btn-logout { color: #f87171 !important; }
+    .btn-logout:hover { background: rgba(248,113,113,.12) !important; }
   </style>
 </head>
 <body>
-  <nav>
-    {% if current_user.is_authenticated %}
-    <span>Logged in as <strong>{{ current_user.name }}</strong></span>
-    <a href="/logout">Log out</a>
-    {% else %}
-    <span>Time-Locked Secret</span>
-    <a href="/login">Log in</a>
-    {% endif %}
+  <nav class="topbar">
+    <a href="/" class="brand">🔒 Time-Lock</a>
+    <div class="nav-links">
+      {% if current_user.is_authenticated %}
+      <span class="user-badge">{{ current_user.name }}</span>
+      <a href="/">+ New</a>
+      <a href="/my-secrets">My Secrets</a>
+      <a href="/logout" class="btn-logout">Log out</a>
+      {% else %}
+      <a href="/login">Log in</a>
+      <a href="/signup">Sign up</a>
+      {% endif %}
+    </div>
   </nav>
+  <div class="container">
   <h1>Time-Locked Secret</h1>
 
   {% if result.status == 'available' %}
@@ -77,5 +90,6 @@
       el.textContent = date.toLocaleString(undefined, fmt);
     });
   </script>
+  </div>
 </body>
 </html>

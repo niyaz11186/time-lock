@@ -27,7 +27,7 @@ class User(UserMixin):
     def get(user_id: int) -> "User | None":
         with get_connection() as conn:
             row = conn.execute(
-                "SELECT id, email, name FROM users WHERE id = ?", (user_id,)
+                "SELECT id, email, name FROM users WHERE id = %s", (user_id,)
             ).fetchone()
         if row is None:
             return None
@@ -37,7 +37,7 @@ class User(UserMixin):
     def get_by_email(email: str) -> "User | None":
         with get_connection() as conn:
             row = conn.execute(
-                "SELECT id, email, name FROM users WHERE email = ?", (email,)
+                "SELECT id, email, name FROM users WHERE email = %s", (email,)
             ).fetchone()
         if row is None:
             return None
@@ -80,17 +80,17 @@ def signup_post():
         return render_template("signup.html", error="Passwords do not match."), 400
 
     with get_connection() as conn:
-        existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        existing = conn.execute("SELECT id FROM users WHERE email = %s", (email,)).fetchone()
         if existing:
             return render_template("signup.html", error="An account with that email already exists."), 400
 
         now = datetime.now(timezone.utc).isoformat()
         conn.execute(
-            "INSERT INTO users (email, name, password_hash, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (email, name, password_hash, created_at) VALUES (%s, %s, %s, %s)",
             (email, name or None, generate_password_hash(password), now),
         )
         conn.commit()
-        row = conn.execute("SELECT id, email, name FROM users WHERE email = ?", (email,)).fetchone()
+        row = conn.execute("SELECT id, email, name FROM users WHERE email = %s", (email,)).fetchone()
 
     user = User(row["id"], row["email"], row["name"])
     login_user(user)
@@ -111,7 +111,7 @@ def login_post():
 
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT id, email, name, password_hash FROM users WHERE email = ?", (email,)
+            "SELECT id, email, name, password_hash FROM users WHERE email = %s", (email,)
         ).fetchone()
 
     if row is None or not row["password_hash"] or not check_password_hash(row["password_hash"], password):
@@ -176,22 +176,22 @@ def google_callback():
     now = datetime.now(timezone.utc).isoformat()
 
     with get_connection() as conn:
-        row = conn.execute("SELECT id, email, name FROM users WHERE google_id = ?", (google_id,)).fetchone()
+        row = conn.execute("SELECT id, email, name FROM users WHERE google_id = %s", (google_id,)).fetchone()
         if row is None:
             # Check if email already exists (user registered with password before)
-            row = conn.execute("SELECT id, email, name FROM users WHERE email = ?", (email,)).fetchone()
+            row = conn.execute("SELECT id, email, name FROM users WHERE email = %s", (email,)).fetchone()
             if row:
                 # Link Google ID to existing account
-                conn.execute("UPDATE users SET google_id = ? WHERE id = ?", (google_id, row["id"]))
+                conn.execute("UPDATE users SET google_id = %s WHERE id = %s", (google_id, row["id"]))
                 conn.commit()
             else:
                 # Brand new user via Google
                 conn.execute(
-                    "INSERT INTO users (email, name, google_id, created_at) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO users (email, name, google_id, created_at) VALUES (%s, %s, %s, %s)",
                     (email, name, google_id, now),
                 )
                 conn.commit()
-                row = conn.execute("SELECT id, email, name FROM users WHERE email = ?", (email,)).fetchone()
+                row = conn.execute("SELECT id, email, name FROM users WHERE email = %s", (email,)).fetchone()
 
     login_user(User(row["id"], row["email"], row["name"]))
     return redirect(url_for("main.create_form"))

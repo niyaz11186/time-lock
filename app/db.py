@@ -1,27 +1,63 @@
-import sqlite3
 import os
 
-
-def get_db_path() -> str:
-    """Returns the path to secrets.db in the project root."""
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(project_root, "secrets.db")
+import psycopg2
+import psycopg2.extras
 
 
-def get_connection(db_path: str | None = None) -> sqlite3.Connection:
-    """Returns a sqlite3 connection. Uses get_db_path() if no path provided."""
-    path = db_path if db_path is not None else get_db_path()
-    conn = sqlite3.connect(path)
-    conn.row_factory = sqlite3.Row
-    return conn
+class _PGConnection:
+    """Thin adapter giving psycopg2 a sqlite3-compatible execute() interface.
+
+    Allows ``with get_connection() as conn: conn.execute(sql, params)``
+    to work throughout the codebase unchanged.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        self._conn = psycopg2.connect(cursor_factory=psycopg2.extras.RealDictCursor, **kwargs)
+        self._cur = self._conn.cursor()
+
+    def execute(self, sql: str, params=None):
+        self._cur.execute(sql, params)
+        return self._cur
+
+    def commit(self) -> None:
+        self._conn.commit()
+
+    def __enter__(self) -> "_PGConnection":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        try:
+            if exc_type:
+                self._conn.rollback()
+            else:
+                self._conn.commit()
+        finally:
+            self._cur.close()
+            self._conn.close()
+
+
+def get_connection(db_path: str | None = None) -> _PGConnection:
+    """Return a Postgres connection adapter.
+
+    *db_path* is accepted but ignored — kept for API compatibility.
+    Reads DB_HOST / DB_PORT / DB_NAME / DB_USER / DB_PASSWORD from the environment.
+    """
+    return _PGConnection(
+        host=os.environ["DB_HOST"],
+        port=int(os.environ.get("DB_PORT", "5432")),
+        dbname=os.environ.get("DB_NAME", "postgres"),
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        sslmode=os.environ.get("DB_SSLMODE", "disable"),
+    )
 
 
 def init_db(db_path: str | None = None) -> None:
-    """Creates all tables if they don't exist."""
-    with get_connection(db_path) as conn:
+    """Creates all tables if they don't exist. Safe to call on every startup."""
+    with get_connection() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                id            BIGSERIAL PRIMARY KEY,
                 email         TEXT NOT NULL UNIQUE,
                 name          TEXT,
                 password_hash TEXT,
@@ -32,11 +68,10 @@ def init_db(db_path: str | None = None) -> None:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS secrets (
                 id          TEXT PRIMARY KEY,
-                user_id     INTEGER REFERENCES users(id),
+                user_id     BIGINT REFERENCES users(id),
                 content     TEXT NOT NULL,
                 start_utc   TEXT NOT NULL,
                 end_utc     TEXT NOT NULL,
                 created_at  TEXT NOT NULL
             )
         """)
-        conn.commit()
