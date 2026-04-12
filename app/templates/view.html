@@ -3,102 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>View Secret</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: sans-serif; margin: 0; padding: 0; background: #f8fafc; }
-    .container { max-width: 600px; margin: 0 auto; padding: 36px 16px 60px; }
-    .box { padding: 20px 24px; border-radius: 6px; margin-top: 24px; }
-    .available { background: #f0fdf4; border: 1px solid #86efac; }
-    .not-yet   { background: #fffbeb; border: 1px solid #fcd34d; }
-    .expired   { background: #fef2f2; border: 1px solid #fca5a5; }
-    .content   { white-space: pre-wrap; font-family: monospace; font-size: 15px; margin-top: 8px; }
-    .window    { margin-top: 12px; font-size: 13px; color: #6b7280; }
-    .window span { font-weight: bold; color: #374151; }
-    nav.topbar { position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; height: 54px; background: #1e293b; box-shadow: 0 1px 6px rgba(0,0,0,.3); }
-    .brand { font-size: 15px; font-weight: 700; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 6px; }
-    .nav-links { display: flex; align-items: center; gap: 4px; font-size: 13px; }
-    .nav-links a { color: #cbd5e1; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-weight: 500; }
-    .nav-links a:hover { background: rgba(255,255,255,.1); color: #fff; }
-    .user-badge { color: #94a3b8; font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,.07); border-radius: 5px; margin-right: 4px; }
-    .btn-logout { color: #f87171 !important; }
-    .btn-logout:hover { background: rgba(248,113,113,.12) !important; }
-  </style>
+  <title>View Secret - TimeVault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <nav class="topbar">
-    <a href="/" class="brand">🔒 Time-Lock</a>
-    <div class="nav-links">
-      {% if current_user.is_authenticated %}
-      <span class="user-badge">{{ current_user.name }}</span>
-      <a href="/">+ New</a>
-      <a href="/my-secrets">My Secrets</a>
-      <a href="/logout" class="btn-logout">Log out</a>
-      {% else %}
-      <a href="/login">Log in</a>
-      <a href="/signup">Sign up</a>
-      {% endif %}
+<body class="bg-[#0e1628] min-h-screen font-sans">
+  <nav class="bg-[#0e1628] border-b border-white/5 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 no-underline">
+        <span class="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.25 3.75 10.15 9 11.35C17.25 21.15 21 16.25 21 11V5l-9-4z"/>
+          </svg>
+        </span>
+        <span class="text-white font-semibold tracking-tight text-sm">TimeVault</span>
+      </a>
+      <div class="flex items-center gap-1 text-sm">
+        {% if current_user.is_authenticated %}
+        <a href="/" class="text-white/55 px-4 py-1.5 rounded-md font-medium hover:text-white hover:bg-white/10 transition-colors no-underline">New</a>
+        <a href="/my-secrets" class="text-white/90 px-4 py-1.5 rounded-md font-medium hover:bg-white/10 transition-colors no-underline">History</a>
+        <a href="/logout" class="text-red-300 px-4 py-1.5 rounded-md font-medium hover:bg-red-400/10 transition-colors no-underline">Log out</a>
+        {% else %}
+        <a href="/login" class="text-white/90 px-4 py-1.5 rounded-md font-medium hover:bg-white/10 transition-colors no-underline">Log in</a>
+        <a href="/signup" class="text-white/55 px-4 py-1.5 rounded-md font-medium hover:text-white hover:bg-white/10 transition-colors no-underline">Sign up</a>
+        {% endif %}
+      </div>
     </div>
   </nav>
-  <div class="container">
-  <h1>Time-Locked Secret</h1>
 
-  {% if result.status == 'available' %}
-  <div class="box available">
-    <strong>Secret is available:</strong>
-    <div class="content">{{ result.content }}</div>
-    {% if secret.is_recurring %}
-    <p class="window">
-      Recurring window: every
-      <span>{{ secret.recur_days | map('int') | map('string') | list | join(', ') | replace('0','Mon') | replace('1','Tue') | replace('2','Wed') | replace('3','Thu') | replace('4','Fri') | replace('5','Sat') | replace('6','Sun') }}</span>
-      &nbsp;{{ secret.recur_start_time }} – {{ secret.recur_end_time }} ({{ secret.recur_timezone }})
-    </p>
-    {% else %}
-    <p class="window">
-      Access window:
-      <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-      &rarr;
-      <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-    </p>
-    {% endif %}
-  </div>
+  <div class="max-w-3xl mx-auto px-4 py-10">
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">TimeVault Secret</h1>
 
-  {% elif result.status == 'not_yet' %}
-  <div class="box not-yet">
-    <strong>This secret is not yet available.</strong>
-    {% if secret.is_recurring %}
-    <p>
-      This secret repeats every
-      <strong>{{ secret.recur_days | map('int') | map('string') | list | join(', ') | replace('0','Mon') | replace('1','Tue') | replace('2','Wed') | replace('3','Thu') | replace('4','Fri') | replace('5','Sat') | replace('6','Sun') }}</strong>
-      between <strong>{{ secret.recur_start_time }}</strong> and <strong>{{ secret.recur_end_time }}</strong> ({{ secret.recur_timezone }}).
-    </p>
-    <p>Next available:
-      <strong><span class="local-time" data-utc="{{ result.available_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ result.available_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></strong>
-    </p>
-    {% else %}
-    <p>It will become accessible on
-      <strong><span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span></strong>.
-    </p>
-    <p class="window">
-      Access window:
-      <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-      &rarr;
-      <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-    </p>
-    {% endif %}
-  </div>
+      {% if result.status == 'available' %}
+      <div class="mt-5 rounded-2xl border border-green-200 bg-green-50 p-5">
+        <p class="text-green-800 font-semibold">Secret is available:</p>
+        <div class="mt-2 p-4 rounded-xl bg-white border border-green-100 font-mono text-sm text-gray-700 whitespace-pre-wrap">{{ result.content }}</div>
+        {% if secret.is_recurring %}
+        <p class="text-sm text-green-800 mt-3 leading-relaxed">
+          Recurring window: every
+          <span class="font-semibold">{{ secret.recur_days | map('int') | map('string') | list | join(', ') | replace('0','Mon') | replace('1','Tue') | replace('2','Wed') | replace('3','Thu') | replace('4','Fri') | replace('5','Sat') | replace('6','Sun') }}</span>
+          {{ secret.recur_start_time }} – {{ secret.recur_end_time }} ({{ secret.recur_timezone }})
+        </p>
+        {% else %}
+        <p class="text-sm text-green-800 mt-3">
+          Access window:
+          <span class="font-semibold local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+          →
+          <span class="font-semibold local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+        </p>
+        {% endif %}
+      </div>
 
-  {% elif result.status == 'expired' %}
-  <div class="box expired">
-    <strong>This secret has expired.</strong>
-    <p class="window">
-      Access window was:
-      <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-      &rarr;
-      <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-    </p>
+      {% elif result.status == 'not_yet' %}
+      <div class="mt-5 rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
+        <p class="text-yellow-800 font-semibold">This secret is not yet available.</p>
+        {% if secret.is_recurring %}
+        <p class="text-sm text-yellow-800 mt-3 leading-relaxed">
+          This secret repeats every
+          <span class="font-semibold">{{ secret.recur_days | map('int') | map('string') | list | join(', ') | replace('0','Mon') | replace('1','Tue') | replace('2','Wed') | replace('3','Thu') | replace('4','Fri') | replace('5','Sat') | replace('6','Sun') }}</span>
+          between <span class="font-semibold">{{ secret.recur_start_time }}</span> and <span class="font-semibold">{{ secret.recur_end_time }}</span> ({{ secret.recur_timezone }}).
+        </p>
+        <p class="text-sm text-yellow-800 mt-2">Next available:
+          <span class="font-semibold local-time" data-utc="{{ result.available_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ result.available_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+        </p>
+        {% else %}
+        <p class="text-sm text-yellow-800 mt-3">It will become accessible on
+          <span class="font-semibold local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>.
+        </p>
+        <p class="text-sm text-yellow-800 mt-2">
+          Access window:
+          <span class="font-semibold local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+          →
+          <span class="font-semibold local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+        </p>
+        {% endif %}
+      </div>
+
+      {% elif result.status == 'expired' %}
+      <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 p-5">
+        <p class="text-red-800 font-semibold">This secret has expired.</p>
+        <p class="text-sm text-red-800 mt-2">
+          Access window was:
+          <span class="font-semibold local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+          →
+          <span class="font-semibold local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+        </p>
+      </div>
+      {% endif %}
+    </div>
   </div>
-  {% endif %}
 
   <script>
     var fmt = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' };
@@ -107,6 +100,5 @@
       el.textContent = date.toLocaleString(undefined, fmt);
     });
   </script>
-  </div>
 </body>
 </html>
