@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+from typing import List
 
 
 @dataclass
@@ -11,6 +12,12 @@ class Secret:
     start_utc: datetime
     end_utc: datetime
     created_at: datetime
+    # Recurring weekly fields (all None for one-time secrets)
+    is_recurring: bool = False
+    recur_days: List[int] = field(default_factory=list)  # 0=Mon … 6=Sun
+    recur_start_time: str | None = None   # "HH:MM" in creator's timezone
+    recur_end_time: str | None = None     # "HH:MM" in creator's timezone
+    recur_timezone: str | None = None     # IANA tz string
 
 
 @dataclass

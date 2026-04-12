@@ -15,6 +15,15 @@
     .error { background: #fee2e2; border: 1px solid #f87171; color: #b91c1c; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
     button { margin-top: 20px; padding: 10px 24px; font-size: 15px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 4px; }
     button:hover { background: #1d4ed8; }
+    .recur-toggle { margin-top: 20px; display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #374151; }
+    .recur-toggle input { width: auto; margin: 0; cursor: pointer; }
+    .recur-section { display: none; margin-top: 16px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; }
+    .recur-section.visible { display: block; }
+    .day-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .day-grid label { display: flex; align-items: center; gap: 4px; font-weight: normal; margin: 0; font-size: 13px; cursor: pointer; }
+    .day-grid input { width: auto; margin: 0; }
+    .time-row { display: flex; gap: 16px; margin-top: 12px; }
+    .time-row > div { flex: 1; }
     nav.topbar { position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; height: 54px; background: #1e293b; box-shadow: 0 1px 6px rgba(0,0,0,.3); }
     .brand { font-size: 15px; font-weight: 700; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 6px; }
     .nav-links { display: flex; align-items: center; gap: 4px; font-size: 13px; }
@@ -64,6 +73,26 @@
       {% endfor %}
     </select>
 
+    <!-- Optional weekly recurrence -->
+    <label class="recur-toggle">
+      <input type="checkbox" id="recur_toggle" name="is_recurring" value="1" {% if request.form.get('is_recurring') %}checked{% endif %}>
+      Repeat this secret on a weekly schedule
+    </label>
+
+    <div class="recur-section" id="recur_section">
+      <label>Days of the week</label>
+      <div class="day-grid">
+        {% for num, name in [(0,'Mon'),(1,'Tue'),(2,'Wed'),(3,'Thu'),(4,'Fri'),(5,'Sat'),(6,'Sun')] %}
+        <label>
+          <input type="checkbox" name="recur_days" value="{{ num }}"
+            {% if num|string in request.form.getlist('recur_days') %}checked{% endif %}>
+          {{ name }}
+        </label>
+        {% endfor %}
+      </div>
+      <p style="margin: 10px 0 0; font-size: 12px; color: #6b7280;">Daily window is taken from the times you entered above.</p>
+    </div>
+
     <button type="submit">Create Secret</button>
   </form>
 
@@ -71,11 +100,24 @@
     // Auto-select the browser's local timezone in the dropdown
     var localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     var sel = document.getElementById('timezone');
-    // Only auto-select if the user hasn't already chosen one (i.e. page is fresh)
     if (sel && !sel.value) {
       var opt = sel.querySelector('option[value="' + localTz + '"]');
       if (opt) { opt.selected = true; }
     }
+
+    // Toggle recurring section
+    var toggle = document.getElementById('recur_toggle');
+    var recurSection = document.getElementById('recur_section');
+
+    function applyToggle() {
+      if (toggle.checked) {
+        recurSection.classList.add('visible');
+      } else {
+        recurSection.classList.remove('visible');
+      }
+    }
+    toggle.addEventListener('change', applyToggle);
+    applyToggle(); // apply on page load (handles re-render after error)
   </script>
   </div>
 </body>

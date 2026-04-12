@@ -36,9 +36,8 @@ def create_form():
 @login_required
 def create_secret():
     content = request.form.get("content", "")
-    start_str = request.form.get("start_dt", "")
-    end_str = request.form.get("end_dt", "")
     tz_name = request.form.get("timezone", "")
+    is_recurring = request.form.get("is_recurring") == "1"
 
     try:
         if not tz_name:
@@ -48,16 +47,43 @@ def create_secret():
         except (ZoneInfoNotFoundError, KeyError):
             raise ValidationError(f"Unknown time zone: {tz_name}")
 
-        try:
-            start_local = datetime.fromisoformat(start_str)
-            end_local = datetime.fromisoformat(end_str)
-        except ValueError:
-            raise ValidationError("Invalid datetime format. Use YYYY-MM-DDTHH:MM.")
+        if is_recurring:
+            recur_days = [int(d) for d in request.form.getlist("recur_days")]
+            # Reuse the times from start_dt / end_dt — no separate time inputs needed
+            start_str = request.form.get("start_dt", "")
+            end_str = request.form.get("end_dt", "")
+            try:
+                start_local = datetime.fromisoformat(start_str)
+                end_local = datetime.fromisoformat(end_str)
+            except ValueError:
+                raise ValidationError("Invalid datetime format. Use YYYY-MM-DDTHH:MM.")
+            recur_start_time = start_local.strftime("%H:%M")
+            recur_end_time = end_local.strftime("%H:%M")
+            from datetime import date
+            today = date.today()
+            start_utc = datetime.combine(today, start_local.time())
+            end_utc = datetime.combine(today, end_local.time())
+            token = _store.create_secret(
+                content, start_utc, end_utc,
+                user_id=current_user.id,
+                is_recurring=True,
+                recur_days=recur_days,
+                recur_start_time=recur_start_time,
+                recur_end_time=recur_end_time,
+                recur_timezone=tz_name,
+            )
+        else:
+            start_str = request.form.get("start_dt", "")
+            end_str = request.form.get("end_dt", "")
+            try:
+                start_local = datetime.fromisoformat(start_str)
+                end_local = datetime.fromisoformat(end_str)
+            except ValueError:
+                raise ValidationError("Invalid datetime format. Use YYYY-MM-DDTHH:MM.")
+            start_utc = start_local.replace(tzinfo=tz).astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+            end_utc = end_local.replace(tzinfo=tz).astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+            token = _store.create_secret(content, start_utc, end_utc, user_id=current_user.id)
 
-        start_utc = start_local.replace(tzinfo=tz).astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
-        end_utc = end_local.replace(tzinfo=tz).astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
-
-        token = _store.create_secret(content, start_utc, end_utc, user_id=current_user.id)
         return redirect(url_for("main.success", token=token))
 
     except ValidationError as exc:

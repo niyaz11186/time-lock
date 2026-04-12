@@ -47,21 +47,37 @@
   <div class="box available">
     <strong>Secret is available:</strong>
     <div class="content">{{ result.content }}</div>
+    {% if secret.is_recurring %}
+    <p class="window">
+      Recurring window: every
+      <span>{{ secret.recur_days | map('int') | map('string') | list | join(', ') | replace('0','Mon') | replace('1','Tue') | replace('2','Wed') | replace('3','Thu') | replace('4','Fri') | replace('5','Sat') | replace('6','Sun') }}</span>
+      &nbsp;{{ secret.recur_start_time }} – {{ secret.recur_end_time }} ({{ secret.recur_timezone }})
+    </p>
+    {% else %}
     <p class="window">
       Access window:
       <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
       &rarr;
       <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
     </p>
+    {% endif %}
   </div>
 
   {% elif result.status == 'not_yet' %}
   <div class="box not-yet">
     <strong>This secret is not yet available.</strong>
+    {% if secret.is_recurring %}
+    <p>
+      This secret repeats every
+      <strong>{{ secret.recur_days | map('int') | map('string') | list | join(', ') | replace('0','Mon') | replace('1','Tue') | replace('2','Wed') | replace('3','Thu') | replace('4','Fri') | replace('5','Sat') | replace('6','Sun') }}</strong>
+      between <strong>{{ secret.recur_start_time }}</strong> and <strong>{{ secret.recur_end_time }}</strong> ({{ secret.recur_timezone }}).
+    </p>
+    <p>Next available:
+      <strong><span class="local-time" data-utc="{{ result.available_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ result.available_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></strong>
+    </p>
+    {% else %}
     <p>It will become accessible on
-      <strong>
-        <span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-      </strong>.
+      <strong><span class="local-time" data-utc="{{ secret.start_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.start_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span></strong>.
     </p>
     <p class="window">
       Access window:
@@ -69,6 +85,7 @@
       &rarr;
       <span class="local-time" data-utc="{{ secret.end_utc.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ secret.end_utc.strftime('%Y-%m-%d %H:%M UTC') }}</span>
     </p>
+    {% endif %}
   </div>
 
   {% elif result.status == 'expired' %}

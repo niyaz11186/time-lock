@@ -67,11 +67,16 @@ def init_db(db_path: str | None = None) -> None:
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS secrets (
-                id          TEXT PRIMARY KEY,
-                user_id     BIGINT REFERENCES users(id),
-                content     TEXT NOT NULL,
-                start_utc   TEXT NOT NULL,
-                end_utc     TEXT NOT NULL,
-                created_at  TEXT NOT NULL
+                id              TEXT PRIMARY KEY,
+                user_id         BIGINT REFERENCES users(id),
+                content         TEXT NOT NULL,
+                start_utc       TEXT NOT NULL,
+                end_utc         TEXT NOT NULL,
+                created_at      TEXT NOT NULL,
+                is_recurring    BOOLEAN NOT NULL DEFAULT FALSE,
+                recur_days      TEXT,
+                recur_start_time TEXT,
+                recur_end_time  TEXT,
+                recur_timezone  TEXT
             )
         """)
