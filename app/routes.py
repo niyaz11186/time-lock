@@ -4,10 +4,11 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.access_controller import AccessController
+from app.db import get_connection
 from app.models import ValidationError
 from app.secret_store import SecretStore
 
@@ -24,6 +25,18 @@ def _grouped_timezones() -> dict[str, list[str]]:
     return dict(sorted(groups.items()))
 
 _TIMEZONES = _grouped_timezones()
+
+
+@bp.route("/health")
+def health():
+    """Lightweight endpoint for external uptime pings (e.g. cron-job.org).
+    Runs a trivial DB query to keep Supabase's inactivity timer from expiring."""
+    try:
+        with get_connection() as conn:
+            conn.execute("SELECT 1")
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "detail": str(e)}), 500
 
 
 @bp.route("/", methods=["GET"])
