@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 import secrets
 from datetime import datetime
 from typing import List
+
+from cryptography.fernet import Fernet, InvalidToken
 
 from app.db import get_connection, init_db
 from app.models import Secret, ValidationError
@@ -11,9 +14,26 @@ from app.models import Secret, ValidationError
 _MAX_CONTENT_LENGTH = 10_000
 
 
+def _get_fernet() -> Fernet:
+    """Load the content encryption key from the environment.
+
+    Raises if the key is missing so we never silently fall back to
+    storing secrets in plaintext.
+    """
+    key = os.environ.get("SECRET_ENCRYPTION_KEY")
+    if not key:
+        raise RuntimeError(
+            "SECRET_ENCRYPTION_KEY is not set. Generate one with: "
+            "python -c \"from cryptography.fernet import Fernet; "
+            "print(Fernet.generate_key().decode())\" and add it to your .env file."
+        )
+    return Fernet(key.encode())
+
+
 class SecretStore:
     def __init__(self) -> None:
         init_db()
+        self._fernet = _get_fernet()
 
     # ------------------------------------------------------------------
     # Task 2.3
@@ -63,6 +83,9 @@ class SecretStore:
         # Generate token (32 hex chars = 128 bits of entropy)
         token = secrets.token_hex(16)
 
+        # Encrypt content before it ever touches the database
+        encrypted_content = self._fernet.encrypt(content.encode()).decode()
+
         # Persist
         now = datetime.utcnow().isoformat()
         with get_connection() as conn:
@@ -73,7 +96,7 @@ class SecretStore:
                 (
                     token,
                     user_id,
-                    content,
+                    encrypted_content,
                     start_dt.isoformat(),
                     end_dt.isoformat(),
                     now,
@@ -105,7 +128,7 @@ class SecretStore:
         if row is None:
             return None
 
-        return _row_to_secret(row)
+        return _row_to_secret(row, self._fernet)
 
     def list_secrets(self, user_id: int) -> list[Secret]:
         """Return all secrets belonging to user_id, newest first."""
@@ -116,7 +139,7 @@ class SecretStore:
                 "FROM secrets WHERE user_id = %s ORDER BY created_at DESC",
                 (user_id,),
             ).fetchall()
-        return [_row_to_secret(row) for row in rows]
+        return [_row_to_secret(row, self._fernet) for row in rows]
 
     def delete_secret(self, secret_id: str, user_id: int) -> bool:
         """Delete a secret only if it belongs to user_id. Returns True if deleted."""
@@ -129,7 +152,7 @@ class SecretStore:
         return cur.rowcount > 0
 
 
-def _row_to_secret(row) -> Secret:
+def _row_to_secret(row, fernet: Fernet) -> Secret:
     raw_days = row["recur_days"]
     if raw_days:
         try:
@@ -138,9 +161,17 @@ def _row_to_secret(row) -> Secret:
             recur_days = []
     else:
         recur_days = []
+
+    try:
+        content = fernet.decrypt(row["content"].encode()).decode()
+    except (InvalidToken, ValueError):
+        # Row predates encryption, or the key doesn't match — surface as-is
+        # rather than crashing the view.
+        content = row["content"]
+
     return Secret(
         id=row["id"],
-        content=row["content"],
+        content=content,
         start_utc=datetime.fromisoformat(row["start_utc"]),
         end_utc=datetime.fromisoformat(row["end_utc"]),
         created_at=datetime.fromisoformat(row["created_at"]),
